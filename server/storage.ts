@@ -1,37 +1,77 @@
-import { type User, type InsertUser } from "@shared/schema";
+import { type Member, type InsertMember, type Team, type InsertTeam } from "@shared/schema";
 import { randomUUID } from "crypto";
 
-// modify the interface with any CRUD methods
-// you might need
-
 export interface IStorage {
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  // Member operations
+  getAllMembers(): Promise<Member[]>;
+  getMember(id: string): Promise<Member | undefined>;
+  createMember(member: InsertMember): Promise<Member>;
+  
+  // Team operations
+  getAllTeams(): Promise<Team[]>;
+  getTeam(id: string): Promise<Team | undefined>;
+  createTeam(team: InsertTeam): Promise<Team>;
+  getTeamWithMembers(id: string): Promise<{ team: Team; members: Member[] } | undefined>;
 }
 
 export class MemStorage implements IStorage {
-  private users: Map<string, User>;
+  private members: Map<string, Member>;
+  private teams: Map<string, Team>;
 
   constructor() {
-    this.users = new Map();
+    this.members = new Map();
+    this.teams = new Map();
   }
 
-  async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+  async getAllMembers(): Promise<Member[]> {
+    return Array.from(this.members.values());
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+  async getMember(id: string): Promise<Member | undefined> {
+    return this.members.get(id);
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
+  async createMember(insertMember: InsertMember): Promise<Member> {
     const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+    const member: Member = {
+      ...insertMember,
+      id,
+      createdAt: new Date(),
+    };
+    this.members.set(id, member);
+    return member;
+  }
+
+  async getAllTeams(): Promise<Team[]> {
+    return Array.from(this.teams.values());
+  }
+
+  async getTeam(id: string): Promise<Team | undefined> {
+    return this.teams.get(id);
+  }
+
+  async createTeam(insertTeam: InsertTeam): Promise<Team> {
+    const id = randomUUID();
+    const team: Team = {
+      ...insertTeam,
+      id,
+      createdAt: new Date(),
+    };
+    this.teams.set(id, team);
+    return team;
+  }
+
+  async getTeamWithMembers(id: string): Promise<{ team: Team; members: Member[] } | undefined> {
+    const team = this.teams.get(id);
+    if (!team) {
+      return undefined;
+    }
+
+    const members = team.memberIds
+      .map((memberId) => this.members.get(memberId))
+      .filter((m): m is Member => m !== undefined);
+
+    return { team, members };
   }
 }
 

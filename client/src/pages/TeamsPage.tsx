@@ -1,85 +1,50 @@
 import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import TeamCard, { type Team } from "@/components/TeamCard";
+import { useToast } from "@/hooks/use-toast";
+import TeamCard from "@/components/TeamCard";
 import CreateTeamModal from "@/components/CreateTeamModal";
 import Header from "@/components/Header";
 import type { Member } from "@/components/MemberCard";
+import type { Team as BackendTeam, InsertTeam } from "@shared/schema";
+import type { Team as TeamCardType } from "@/components/TeamCard";
 
-import avatar1 from "@assets/generated_images/Male_CS_student_avatar_287c4fc6.png";
-import avatar2 from "@assets/generated_images/Female_engineer_student_avatar_991821ab.png";
-import avatar3 from "@assets/generated_images/Data_science_student_avatar_170bc2a7.png";
-
-// todo: remove mock functionality
-const MOCK_TEAMS: Team[] = [
-  {
-    id: "1",
-    eventName: "HackX 2025 - AI Innovation Track",
-    eventDate: "2025-03-15",
-    requiredTechStack: ["React", "Node.js", "MongoDB", "Python", "TensorFlow"],
-    teamSize: 5,
-    description: "Building an AI-powered productivity tool that helps students manage their time more effectively using machine learning algorithms.",
-    members: [
-      {
-        id: "1",
-        name: "Arjun Patel",
-        avatar: avatar1,
-        graduationYear: 2025,
-        skills: ["Leadership"],
-        techStack: ["React"],
-      },
-      {
-        id: "2",
-        name: "Sarah Chen",
-        avatar: avatar2,
-        graduationYear: 2025,
-        skills: ["Backend"],
-        techStack: ["Node.js"],
-      },
-      {
-        id: "3",
-        name: "Marcus Rodriguez",
-        avatar: avatar3,
-        graduationYear: 2026,
-        skills: ["ML"],
-        techStack: ["Python"],
-      },
-    ],
-  },
-  {
-    id: "2",
-    eventName: "Startup Weekend - EdTech Challenge",
-    eventDate: "2025-04-20",
-    requiredTechStack: ["Vue.js", "Firebase", "TypeScript", "Stripe"],
-    teamSize: 4,
-    description: "Creating a gamified learning platform for K-12 students with real-time collaboration features.",
-    members: [
-      {
-        id: "4",
-        name: "Emily Wang",
-        avatar: avatar1,
-        graduationYear: 2026,
-        skills: ["Design"],
-        techStack: ["Figma"],
-      },
-      {
-        id: "5",
-        name: "James Thompson",
-        avatar: avatar2,
-        graduationYear: 2027,
-        skills: ["Security"],
-        techStack: ["TypeScript"],
-      },
-    ],
-  },
-];
+interface TeamWithMembers extends Omit<BackendTeam, "memberIds"> {
+  members: Member[];
+}
 
 export default function TeamsPage() {
-  const [teams, setTeams] = useState<Team[]>(MOCK_TEAMS);
+  const { toast } = useToast();
   const [isCreateTeamOpen, setIsCreateTeamOpen] = useState(false);
   const [selectedMembers, setSelectedMembers] = useState<Member[]>([]);
 
-  const handleViewDetails = (team: Team) => {
+  const { data: backendTeams = [], isLoading } = useQuery<BackendTeam[]>({
+    queryKey: ["/api/teams"],
+  });
+
+  const { data: members = [] } = useQuery<Member[]>({
+    queryKey: ["/api/members"],
+  });
+
+  const createTeamMutation = useMutation({
+    mutationFn: async (teamData: InsertTeam) => {
+      return await apiRequest("POST", "/api/teams", teamData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
+    },
+  });
+
+  const teams: TeamWithMembers[] = backendTeams.map((team) => ({
+    ...team,
+    members: team.memberIds
+      .map((id) => members.find((m) => m.id === id))
+      .filter((m): m is Member => m !== undefined),
+  }));
+
+  const handleViewDetails = (team: TeamCardType) => {
     console.log("View team details:", team);
   };
 
@@ -88,15 +53,47 @@ export default function TeamsPage() {
   };
 
   const handleCreateTeam = (teamData: any) => {
-    const newTeam: Team = {
-      id: String(teams.length + 1),
-      ...teamData,
+    const teamPayload: InsertTeam = {
+      eventName: teamData.eventName,
+      eventDate: teamData.eventDate,
+      requiredTechStack: teamData.requiredTechStack,
+      teamSize: teamData.teamSize,
+      description: teamData.description || "",
+      memberIds: teamData.members.map((m: Member) => m.id),
     };
-    setTeams([...teams, newTeam]);
-    setSelectedMembers([]);
-    setIsCreateTeamOpen(false);
-    console.log("New team created:", newTeam);
+
+    createTeamMutation.mutate(teamPayload, {
+      onSuccess: () => {
+        setSelectedMembers([]);
+        setIsCreateTeamOpen(false);
+        toast({
+          title: "Team created successfully",
+          description: `${teamPayload.eventName} has been created with ${teamPayload.memberIds.length} members.`,
+        });
+      },
+      onError: (error) => {
+        console.error("Failed to create team:", error);
+        toast({
+          title: "Failed to create team",
+          description: error instanceof Error ? error.message : "An error occurred while creating the team. Please try again.",
+          variant: "destructive",
+        });
+      },
+    });
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header onCreateTeam={() => setIsCreateTeamOpen(true)} />
+        <main className="max-w-7xl mx-auto px-6 lg:px-12 py-8">
+          <div className="text-center py-16">
+            <p className="text-xl text-muted-foreground">Loading teams...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

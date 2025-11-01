@@ -13,6 +13,7 @@ export interface Team {
   teamSize: number;
   description: string;
   members: Member[];
+  createdAt?: Date;
 }
 
 interface TeamCardProps {

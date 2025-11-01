@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -47,6 +47,17 @@ export default function CreateTeamModal({
   const [teamSize, setTeamSize] = useState(5);
   const [description, setDescription] = useState("");
 
+  useEffect(() => {
+    if (!open) {
+      setEventName("");
+      setEventDate("");
+      setRequiredTechStack([]);
+      setTeamSize(5);
+      setDescription("");
+      setTechStackInput("");
+    }
+  }, [open]);
+
   const handleAddTech = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && techStackInput.trim()) {
       e.preventDefault();
@@ -67,6 +78,11 @@ export default function CreateTeamModal({
       return;
     }
 
+    if (selectedMembers.length === 0) {
+      console.log("Please select at least one team member");
+      return;
+    }
+
     onCreateTeam({
       eventName,
       eventDate,
@@ -75,12 +91,6 @@ export default function CreateTeamModal({
       description,
       members: selectedMembers,
     });
-
-    setEventName("");
-    setEventDate("");
-    setRequiredTechStack([]);
-    setTeamSize(5);
-    setDescription("");
   };
 
   return (
