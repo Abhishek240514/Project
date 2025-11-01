@@ -33,34 +33,32 @@ export default function Header({ onCreateTeam }: HeaderProps) {
         <div className="flex h-16 items-center justify-between gap-4">
           <div className="flex items-center gap-8">
             <Link href="/">
-              <a className="flex items-center gap-2 hover-elevate active-elevate-2 px-3 py-2 rounded-md" data-testid="link-home">
+              <div className="flex items-center gap-2 hover-elevate active-elevate-2 px-3 py-2 rounded-md cursor-pointer" data-testid="link-home">
                 <Users className="h-6 w-6 text-primary" />
                 <span className="text-xl font-bold">TeamHub</span>
-              </a>
+              </div>
             </Link>
 
             <nav className="hidden md:flex items-center gap-2">
               <Link href="/">
-                <a data-testid="link-members">
-                  <Button
-                    variant={location === "/" ? "default" : "ghost"}
-                    className="gap-2"
-                  >
-                    <Users className="h-4 w-4" />
-                    Browse Members
-                  </Button>
-                </a>
+                <Button
+                  variant={location === "/" ? "default" : "ghost"}
+                  className="gap-2"
+                  data-testid="link-members"
+                >
+                  <Users className="h-4 w-4" />
+                  Browse Members
+                </Button>
               </Link>
               <Link href="/teams">
-                <a data-testid="link-teams">
-                  <Button
-                    variant={location === "/teams" ? "default" : "ghost"}
-                    className="gap-2"
-                  >
-                    <Briefcase className="h-4 w-4" />
-                    My Teams
-                  </Button>
-                </a>
+                <Button
+                  variant={location === "/teams" ? "default" : "ghost"}
+                  className="gap-2"
+                  data-testid="link-teams"
+                >
+                  <Briefcase className="h-4 w-4" />
+                  My Teams
+                </Button>
               </Link>
             </nav>
           </div>
