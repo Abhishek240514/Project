@@ -33,9 +33,3 @@ export const insertTeamSchema = createInsertSchema(teams).omit({
   id: true,
   createdAt: true,
 });
-
-export type InsertMember = z.infer<typeof insertMemberSchema>;
-export type Member = typeof members.$inferSelect;
-
-export type InsertTeam = z.infer<typeof insertTeamSchema>;
-export type Team = typeof teams.$inferSelect;

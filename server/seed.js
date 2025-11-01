@@ -1,7 +1,6 @@
-import { storage } from "./storage";
-import type { InsertMember } from "@shared/schema";
+import { storage } from "./storage.js";
 
-const SEED_MEMBERS: InsertMember[] = [
+const SEED_MEMBERS = [
   {
     name: "Arjun Patel",
     avatar: "/attached_assets/generated_images/Male_CS_student_avatar_287c4fc6.png",

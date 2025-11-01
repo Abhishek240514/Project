@@ -1,9 +1,8 @@
-import type { Express } from "express";
-import { createServer, type Server } from "http";
-import { storage } from "./storage";
-import { insertMemberSchema, insertTeamSchema } from "@shared/schema";
+import { createServer } from "http";
+import { storage } from "./storage.js";
+import { insertMemberSchema, insertTeamSchema } from "@shared/schema.js";
 
-export async function registerRoutes(app: Express): Promise<Server> {
+export async function registerRoutes(app) {
   
   // Member routes
   app.get("/api/members", async (_req, res) => {
